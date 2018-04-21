@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<title>Simplex noise</title>
+<style>
+body, html { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; background: black; }
+canvas { display: block; width: 1024px; height: 768px; margin: calc(50vh - 768px / 2) auto 0; border: 2px solid #333; }
+</style>
+<canvas></canvas>
+<script src='simplex.js?8'></script>
+<script>
+var canvas = document.getElementsByTagName('canvas')[0];
+canvas.width = 1024;
+canvas.height = 768;
+
+var ctx = canvas.getContext('2d');
+
+var image = ctx.createImageData(canvas.width, canvas.height);
+var data = image.data;
+
+var simplex = new SimplexNoise
+
+function paint(data, w, h, steps = 100, threshold = 0, inverse = false) {
+  for (var x = 0; x < w; x++) {
+    for (var y = 0; y < h; y++) {
+      var value = simplex.noise(x / steps, y / steps);
+      value = 128 - 128 * value;
+      // value = Math.abs(256 * value);
+
+      var cell = (x + y * w) * 4;
+      if (threshold) value = value < threshold ? 0 : 255
+      if (inverse) value = 255 - value
+      data[cell] = value * x / y;  // red
+      data[cell + 1] = value * y / x;  // green
+      data[cell + 2] = 0;  // blue
+      // data[cell] += Math.max(0, (25 - value) * 8);
+      data[cell + 3] = 255; // alpha.
+    }
+  }
+}
+
+console.time('simplex canvas')
+paint(data, 1024, 768, 100)
+console.timeEnd('simplex canvas')
+
+ctx.fillColor = 'black';
+ctx.fillRect(0, 0, 100, 100);
+ctx.putImageData(image, 0, 0);
+</script>
