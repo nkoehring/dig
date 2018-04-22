@@ -5,9 +5,9 @@ export default class BlockExt {
     this.rand = (x, y) => 0.5 + 0.5 * noiseGen.raw2D(x, y)
   }
 
-  level (level, row, previousRow) {
+  level (level, column, row, previousRow) {
     for (let i = 0; i < row.length; i++) {
-      const r = Math.abs(this.rand(level, i))
+      const r = Math.abs(this.rand(level, column + i))
 
       if (level < L.ground) this.trees(r, i, row, previousRow, level)
       else if (level < L.rock) this.ground(r, i, row, previousRow)

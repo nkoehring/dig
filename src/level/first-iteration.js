@@ -3,14 +3,13 @@ import FastSimplexNoise from 'fast-simplex-noise'
 import {type as T, level as L, probability as P} from './def'
 
 export default class BlockGen {
-  constructor (seed = 'so freakin random') {
-    const simplex = new FastSimplexNoise({ random: SeedRng(seed) })
-    this.rand = (x, y) => 0.5 + 0.5 * simplex.raw2D(x, y)
+  constructor (noiseGen) {
+    this.rand = (x, y) => 0.5 + 0.5 * noiseGen.raw2D(x, y)
   }
 
-  level (level, row, previousRow) {
+  level (level, column, row, previousRow) {
     for (let i = 0; i < row.length; i++) {
-      row[i] = this.block(level, i, row[i], row[i - 1], previousRow[i])
+      row[i] = this.block(level, column + i, row[i], row[i - 1], previousRow[i])
     }
   }
 
