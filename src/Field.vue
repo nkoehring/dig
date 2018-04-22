@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import Level from './lib/level-generator'
+import Level from './level'
 
 const WIDTH = 32
 const HEIGHT = 32

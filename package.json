@@ -1,7 +1,7 @@
 {
-  "name": "building-game",
-  "description": "A blocky, side-scrolling, building and exploration game",
-  "version": "1.0.0",
+  "name": "digging-game",
+  "description": "A blocky, side-scrolling, digging and exploration game",
+  "version": "0.0.1",
   "author": "koehr <n@koehr.in>",
   "license": "MIT",
   "private": true,

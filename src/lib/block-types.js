@@ -1,9 +1,0 @@
-export const AIR = {type: 'air', hp: 0, damage: 0}
-export const GRASS = {type: 'grass', hp: 1, damage: 0}
-export const LEAVES = {type: 'leaves', hp: 1, damage: 0}
-export const WOOD = {type: 'wood', hp: 5, damage: 0}
-export const SOIL = {type: 'soil', hp: 2, damage: 0}
-export const GRAVEL = {type: 'gravel', hp: 5, damage: 0}
-export const STONE = {type: 'stone', hp: 10, damage: 0}
-export const BEDROCK = {type: 'bedrock', hp: 25, damage: 0}
-export const CAVE = {type: 'cave', hp: 0, damage: 0}
