@@ -95,26 +95,48 @@ export default {
 }
 .block {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  background-color: #6DA956;
-  border: 1px solid transparent;
-}
-.block.air { background-color: #56F; }
-.block.grass { background-color: #56F; height: 28px; border-bottom: 2px solid #0A0; }
-.block.leaves { background-color: #383; }
-.block.wood { background-color: #876; }
-.block.soil { background-color: #543; }
-.block.gravel { background-color: #665; }
-.block.stone { background-color: #555; }
-.block.bedrock { background-color: #333; }
-.block.cave { background-color: #000; }
-.block.player {
-  background-image: url(./assets/dwarf.png);
+  width: 32px;
+  height: 32px;
+  background-color: #56F;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
-.block:hover {
-  border-color: rgba(255,255,255,0.2);
-}
+.block.air     { background-color: #56F; }
+.block.grass   { background-image: url(./assets/grass01.png); }
+
+.block.tree_top_left     { background-image: url(./assets/tree_top_left.png); }
+.block.tree_top_middle   { background-image: url(./assets/tree_top_middle.png); }
+.block.tree_top_right    { background-image: url(./assets/tree_top_right.png); }
+
+.block.tree_crown_left   { background-image: url(./assets/tree_crown_left.png); }
+.block.tree_crown_middle { background-image: url(./assets/tree_crown_middle.png); }
+.block.tree_crown_right  { background-image: url(./assets/tree_crown_right.png); }
+
+.block.tree_trunk_left   { background-image: url(./assets/tree_trunk_left.png); }
+.block.tree_trunk_middle { background-image: url(./assets/tree_trunk_middle.png); }
+.block.tree_trunk_right  { background-image: url(./assets/tree_trunk_right.png); }
+
+.block.tree_root_left    { background-image: url(./assets/tree_root_left.png); }
+.block.tree_root_middle  { background-image: url(./assets/tree_root_middle.png); }
+.block.tree_root_right   { background-image: url(./assets/tree_root_right.png); }
+
+.block.tree_top_left_mixed     { background-image: url(./assets/tree_top_left_mixed.png); }
+.block.tree_crown_left_mixed   { background-image: url(./assets/tree_crown_left_mixed.png); }
+.block.tree_trunk_left_mixed   { background-image: url(./assets/tree_trunk_left_mixed.png); }
+.block.tree_root_left_mixed    { background-image: url(./assets/tree_root_left_mixed.png); }
+
+.block.tree_top_right_mixed    { background-image: url(./assets/tree_top_right_mixed.png); }
+.block.tree_crown_right_mixed  { background-image: url(./assets/tree_crown_right_mixed.png); }
+.block.tree_trunk_right_mixed  { background-image: url(./assets/tree_trunk_right_mixed.png); }
+.block.tree_root_right_mixed   { background-image: url(./assets/tree_root_right_mixed.png); }
+
+.block.soil    { background-image: url(./assets/soil01.png); }
+.block.soil_gravel { background-image: url(./assets/soil_gravel01.png); }
+.block.stone_gravel { background-color: #444; /* background-image: url(./assets/soil_gravel01.png) */; }
+.block.stone   { background-image: url(./assets/rock.png); }
+.block.bedrock { background-image: url(./assets/bedrock.png); }
+.block.cave    { background-color: #000; }
+.block.player  { background-image: url(./assets/dwarf.png); }
+.block:hover   { filter: brightness(1.4); }
 </style>

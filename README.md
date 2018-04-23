@@ -16,3 +16,14 @@ npm run build
 ```
 
 For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Credits
+
+Textures all from [OpenGameArt](https://opengameart.org/). More specifically:
+
+* https://opengameart.org/content/nature-tileset
+* https://opengameart.org/content/platform-tileset-nature
+* https://opengameart.org/sites/default/files/tileset2.png
+* https://opengameart.org/content/cave-tileset-2
+
+and partially adapted to my needs.

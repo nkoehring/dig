@@ -17,22 +17,46 @@ export default class BlockExt {
   }
 
   trees (r, i, row, previousRow, level) {
-    if (row[i] === T.wood && previousRow[i] === T.air) {
-      if (row[i - 1] === T.air) row[i - 1] = T.leaves
-      if (row[i + 1] === T.air) row[i + 1] = T.leaves
-      previousRow[i] = T.leaves
-    } else if (previousRow[i] === T.wood) {
-      row[i] = T.wood
-      if (row[i - 1] === T.wood) row[i - 1] = T.air
+    const max = row.length - 1
+
+    if (row[i] === T.tree_top_middle) {
+      if (i) {
+        if (row[i - 1] === T.tree_top_right) row[i - 1] = T.tree_top_left_mixed
+        else row[i - 1] = T.tree_top_left
+      }
+      if (i < max) row[i + 1] = T.tree_top_right
+
+    } else if (previousRow[i] === T.tree_top_middle) {
+      row[i] = T.tree_crown_middle
+      if (i) {
+        if (row[i - 1] === T.tree_crown_right) row[i - 1] = T.tree_crown_left_mixed
+        else row[i - 1] = T.tree_crown_left
+      }
+      if (i < max) row[i + 1] = T.tree_crown_right
+    } else if (previousRow[i] === T.tree_crown_middle) {
+      row[i] = T.tree_trunk_middle
+      if (i) {
+        if (row[i - 1] === T.tree_trunk_right) row[i - 1] = T.tree_trunk_left_mixed
+        else row[i - 1] = T.tree_trunk_left
+      }
+      if (i < max) row[i + 1] = T.tree_trunk_right
+    } else if (previousRow[i] === T.tree_trunk_middle) {
+      row[i] = T.tree_root_middle
+      if (i) {
+        if (row[i - 1] === T.tree_root_right) row[i - 1] = T.tree_root_left_mixed
+        else row[i - 1] = T.tree_root_left
+      }
+      if (i < max) row[i + 1] = T.tree_root_right
     }
   }
 
   ground (r, i, row, previousRow) {
+    const tree_parts = [T.tree_root_left, T.tree_root_middle, T.tree_root_right]
     if (previousRow[i] === T.air) {
       if (r < P.soil_hole) row[i] = T.air
       if (row[i] === T.soil) row[i] = T.grass
-    } else if (previousRow[i] === T.wood && row[i - 1] === T.grass) {
-      row[i] = T.wood
+    } else if (tree_parts.indexOf(previousRow[i]) >= 0) {
+      if (row[i] === T.soil) row[i] = T.grass
     }
   }
 

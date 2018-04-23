@@ -17,7 +17,10 @@ export default class BlockGen {
     if (level < L.peak) return this.air()
 
     const r = this.rand(level, column)
-    if (level < L.ground) return this.treeTop(r)
+    if (level < L.ground) {
+      if (level === L.treeTop) return this.treeTop(r)
+      return this.air()
+    }
     if (level < L.rock) return this.ground(r)
     if (level < L.underground) return this.rock(r)
     return this.underground(r, above, before, level - L.underground)
@@ -30,19 +33,19 @@ export default class BlockGen {
 
   // returns mostly air, but sometimes starts a tree
   treeTop (r) {
-    if (r < P.tree) return T.wood
+    if (r < P.tree) return T.tree_top_middle
     return T.air
   }
 
   // returns mostly soil and grass, sometimes gravel and sometimes air
   ground (r) {
-    if (r < P.soil_gravel) return T.gravel
+    if (r < P.soil_gravel) return T.soil_gravel
     return T.soil
   }
 
   // returns mostly stones, sometimes gravel
   rock (r) {
-    return r < P.rock_gravel ? T.gravel : T.stone
+    return r < P.stone_gravel ? T.stone_gravel : T.stone
   }
 
   // return mostly bedrock, sometimes caves, depending on the level
