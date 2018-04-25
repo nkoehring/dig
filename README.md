@@ -23,7 +23,7 @@ Textures all from [OpenGameArt](https://opengameart.org/). More specifically:
 
 * https://opengameart.org/content/nature-tileset
 * https://opengameart.org/content/platform-tileset-nature
-* https://opengameart.org/sites/default/files/tileset2.png
 * https://opengameart.org/content/cave-tileset-2
+* https://opengameart.org/content/monsterboy-in-wonder-world-mockup-assets
 
 and partially adapted to my needs.

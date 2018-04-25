@@ -18,12 +18,12 @@ export default class Level {
     this.player = new Player(this._grid)
   }
 
-  grid (x, y, px, py) {
-    this.generate(x, y, this._w, this._h, px, py)
+  grid (x, y) {
+    this.generate(x, y, this._w, this._h)
     return this._grid
   }
 
-  generate (x, y, w, h, px, py) {
+  generate (x, y, w, h) {
     for (let i = 0; i < h; i++) {
       const level = y + i
       const column = x
@@ -33,6 +33,5 @@ export default class Level {
       this.blockExt.level(level, column, row, previousRow)
       this._grid[i] = row
     }
-    this.player.setPosition(px, py)
   }
 }

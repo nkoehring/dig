@@ -7,15 +7,15 @@ export const type = {
   tree_top_right: {type: 'tree_top_right', hp: 5, walkable: true},
 
   tree_crown_left: {type: 'tree_crown_left', hp: 5, walkable: true},
-  tree_crown_middle: {type: 'tree_crown_middle', hp: 5, walkable: true},
+  tree_crown_middle: {type: 'tree_crown_middle', hp: 5, walkable: true, climbable: true},
   tree_crown_right: {type: 'tree_crown_right', hp: 5, walkable: true},
 
   tree_trunk_left: {type: 'tree_trunk_left', hp: 5, walkable: true},
-  tree_trunk_middle: {type: 'tree_trunk_middle', hp: 5, walkable: true},
+  tree_trunk_middle: {type: 'tree_trunk_middle', hp: 5, walkable: true, climbable: true},
   tree_trunk_right: {type: 'tree_trunk_right', hp: 5, walkable: true},
 
   tree_root_left: {type: 'tree_root_left', hp: 5, walkable: true},
-  tree_root_middle: {type: 'tree_root_middle', hp: 5, walkable: true},
+  tree_root_middle: {type: 'tree_root_middle', hp: 5, walkable: true, climbable: true},
   tree_root_right: {type: 'tree_root_right', hp: 5, walkable: true},
 
   tree_top_left_mixed: {type: 'tree_top_left_mixed', hp: 5, walkable: true},

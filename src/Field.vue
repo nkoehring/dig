@@ -5,10 +5,12 @@
       @keydown.up="goUp($event)"
       @keydown.right="goRight($event)"
       @keydown.left="goLeft($event)"
+      @keydown.space="jump($event)"
     />
     <div id="level-indicator">x:{{ x }}, y:{{ y }}</div>
+    <div id="player" :class="[player_direction]" />
     <template v-for="row in rows">
-      <div v-for="block in row" class="block" :class="[block.type, block.background]" />
+      <div v-for="block in row" class="block" :class="[block.type]" />
     </template>
   </div>
 </template>
@@ -18,6 +20,8 @@ import Level from './level'
 
 const WIDTH = 32
 const HEIGHT = 32
+const PLAYER_X = ~~(WIDTH / 2) - 1
+const PLAYER_Y = HEIGHT - 16
 const level = new Level(WIDTH, HEIGHT)
 
 export default {
@@ -27,34 +31,82 @@ export default {
       x: 0,
       y: 0,
       player_x: 0,
-      player_y: 0
+      player_y: 0,
+      player_direction: 'left'
     }
   },
   mounted () {
     this.findStartPos()
+    this.mindTheGap()
   },
   computed: {
     rows () {
       return level.grid(this.x, this.y, this.player_x, this.player_y)
+    },
+    blockAtPlayer () {
+      return this.rows[PLAYER_Y][PLAYER_X]
+    },
+    blockLeftOfPlayer () {
+      return this.rows[PLAYER_Y][PLAYER_X - 1]
+    },
+    blockRightOfPlayer () {
+      return this.rows[PLAYER_Y][PLAYER_X + 1]
+    },
+    blockBelowPlayer () {
+      return this.rows[PLAYER_Y + 1][PLAYER_X]
     }
   },
   methods: {
     goDown (ev) {
-      if (ev.shiftKey) this.y += 32
-      else this.y++
+      // TODO: this.player_direction = 'back'
+      if (this.blockBelowPlayer.walkable) this.y++
+      this.mindTheGap()
     },
     goUp (ev) {
-      if (ev.shiftKey) this.y -= 32
-      else this.y--
-      this.y = Math.max(0, this.y)
+      // TODO: this.player_direction = 'back'
+      if (this.blockAtPlayer.climbable) this.y--
     },
     goRight (ev) {
-      if (ev.shiftKey) this.x += 32
-      else this.x++
+      if (this.player_direction !== 'right') {
+        this.player_direction = 'right'
+      } else if (this.blockRightOfPlayer.walkable) {
+        this.x++
+        this.mindTheGap()
+      }
     },
     goLeft (ev) {
-      if (ev.shiftKey) this.x -= 32
-      else this.x--
+      if (this.player_direction !== 'left') {
+        this.player_direction = 'left'
+      } else if (this.blockLeftOfPlayer.walkable) {
+        this.x--
+        this.mindTheGap()
+      }
+    },
+    jump (ev) {
+      this.y--
+      if (this.player_direction === 'left' && this.blockLeftOfPlayer.walkable) {
+        this.x--
+        setTimeout(() => {
+          if (this.blockLeftOfPlayer.walkable) this.x--
+          if (this.blockBelowPlayer.walkable) this.y++
+        }, 50)
+      } else if (this.player_direction === 'right' && this.blockRightOfPlayer.walkable) {
+        this.x++
+        setTimeout(() => {
+          if (this.blockRightOfPlayer.walkable) this.x++
+          if (this.blockBelowPlayer.walkable) this.y++
+        }, 50)
+      }
+      // just jump while facing the back
+      setTimeout(() => this.mindTheGap(), 100)
+    },
+    mindTheGap () {
+      const below = this.blockBelowPlayer
+      console.log('mindTheGap', below)
+      if (below.walkable && !below.climbable) {
+        this.y++
+        setTimeout(() => this.mindTheGap(), 50)
+      }
     },
     findStartPos () {
       const x = parseInt(WIDTH / 2)
@@ -67,7 +119,7 @@ export default {
           break
         }
       }
-    }
+    },
   }
 }
 </script>
@@ -93,16 +145,23 @@ export default {
   right: 0;
   color: white;
 }
-.block {
+#player  {
+  position: absolute;
+  left: calc(32px * 15);
+  top: calc(32px * 16);
+  background-image: url(./assets/dwarf_right.png);
+}
+#player.left  { background-image: url(./assets/dwarf_left.png); }
+#player, .block {
   flex: 0 0 auto;
   width: 32px;
   height: 32px;
-  background-color: #56F;
+  background-color: transparent;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
-.block.air     { background-color: #56F; }
+.block         { background-color: #56F; }
 .block.grass   { background-image: url(./assets/grass01.png); }
 
 .block.tree_top_left     { background-image: url(./assets/tree_top_left.png); }
@@ -137,6 +196,5 @@ export default {
 .block.stone   { background-image: url(./assets/rock.png); }
 .block.bedrock { background-image: url(./assets/bedrock.png); }
 .block.cave    { background-color: #000; }
-.block.player  { background-image: url(./assets/dwarf.png); }
-.block:hover   { filter: brightness(1.4); }
+.block:hover, .block.highlight { filter: brightness(1.4); }
 </style>
