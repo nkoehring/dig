@@ -1,5 +1,5 @@
 <template>
-  <div class="field">
+  <div class="field" @click="handleClick">
     <input v-keep-focussed type="text"
       @keydown.down="goDown($event)"
       @keydown.up="goUp($event)"
@@ -8,9 +8,9 @@
       @keydown.space="jump($event)"
     />
     <div id="level-indicator">x:{{ x }}, y:{{ y }}</div>
-    <div id="player" :class="[player_direction]" />
-    <template v-for="row in rows">
-      <div v-for="block in row" class="block" :class="[block.type]" />
+    <div id="player" :class="[player_direction]" :data-x="player_x" :data-y="player_y" />
+    <template v-for="(row, y) in rows">
+      <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
     </template>
   </div>
 </template>
@@ -30,18 +30,19 @@ export default {
     return {
       x: 0,
       y: 0,
-      player_x: 0,
-      player_y: 0,
-      player_direction: 'left'
+      player_x: PLAYER_X,
+      player_y: PLAYER_Y,
+      player_direction: 'left',
+      walk_steps_x: 0,
+      walk_steps_y: 0
     }
   },
   mounted () {
-    this.findStartPos()
     this.mindTheGap()
   },
   computed: {
     rows () {
-      return level.grid(this.x, this.y, this.player_x, this.player_y)
+      return level.grid(this.x, this.y)
     },
     blockAtPlayer () {
       return this.rows[PLAYER_Y][PLAYER_X]
@@ -58,12 +59,12 @@ export default {
   },
   methods: {
     goDown (ev) {
-      // TODO: this.player_direction = 'back'
+      // TODO: this.player_direction = 'down'
       if (this.blockBelowPlayer.walkable) this.y++
       this.mindTheGap()
     },
     goUp (ev) {
-      // TODO: this.player_direction = 'back'
+      // TODO: this.player_direction = 'up'
       if (this.blockAtPlayer.climbable) this.y--
     },
     goRight (ev) {
@@ -100,26 +101,37 @@ export default {
       // just jump while facing the back
       setTimeout(() => this.mindTheGap(), 100)
     },
+    walkSteps () {
+      if (!this.walk_steps_x && !this.walk_steps_y) return
+
+      if (this.walk_steps_x > 0) {
+        this.goLeft()
+        this.walk_steps_x--
+      } else if (this.walk_steps_x < 0) {
+        this.goRight()
+        this.walk_steps_x++
+      } else if (this.walk_steps_y > 0) {
+        this.goUp()
+        this.walk_steps_y--
+      } else if (this.walk_steps_y < 0) {
+        this.goDown()
+        this.walk_steps_y++
+      }
+      setTimeout(() => this.walkSteps(), 100)
+    },
+    handleClick (ev) {
+      const coords = ev.target.dataset
+      this.walk_steps_x = this.player_x - parseInt(coords.x)
+      this.walk_steps_y = this.player_y - parseInt(coords.y)
+      this.walkSteps()
+    },
     mindTheGap () {
       const below = this.blockBelowPlayer
-      console.log('mindTheGap', below)
       if (below.walkable && !below.climbable) {
         this.y++
         setTimeout(() => this.mindTheGap(), 50)
       }
-    },
-    findStartPos () {
-      const x = parseInt(WIDTH / 2)
-
-      for (let y = HEIGHT - 1; y; y--) {
-        const block = this.rows[y][x]
-        if (block.walkable) {
-          this.player_x = x
-          this.player_y = y
-          break
-        }
-      }
-    },
+    }
   }
 }
 </script>
@@ -151,7 +163,10 @@ export default {
   top: calc(32px * 16);
   background-image: url(./assets/dwarf_right.png);
 }
+#player.right { background-image: url(./assets/dwarf_right.png); }
 #player.left  { background-image: url(./assets/dwarf_left.png); }
+#player.up  { background-image: url(./assets/dwarf_back.png); }
+#player.down  { background-image: url(./assets/dwarf_back.png); }
 #player, .block {
   flex: 0 0 auto;
   width: 32px;
