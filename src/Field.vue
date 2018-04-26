@@ -1,5 +1,5 @@
 <template>
-  <div class="field" @click="handleClick">
+  <div id="field" @click="handleClick">
     <input v-keep-focussed type="text"
       @keydown.down="goDown($event)"
       @keydown.up="goUp($event)"
@@ -7,21 +7,23 @@
       @keydown.left="goLeft($event)"
       @keydown.space="jump($event)"
     />
-    <div id="level-indicator">x:{{ x }}, y:{{ y }}</div>
+    <div id="wrap">
+      <template v-for="(row, y) in rows">
+        <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
+      </template>
+    </div>
     <div id="player" :class="[player_direction]" :data-x="player_x" :data-y="player_y" />
-    <template v-for="(row, y) in rows">
-      <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
-    </template>
+    <div id="level-indicator">x:{{ x }}, y:{{ y }}</div>
   </div>
 </template>
 
 <script>
 import Level from './level'
 
-const WIDTH = 32
-const HEIGHT = 32
+const WIDTH = 32 + 2
+const HEIGHT = 32 + 2
 const PLAYER_X = ~~(WIDTH / 2) - 1
-const PLAYER_Y = HEIGHT - 16
+const PLAYER_Y = HEIGHT - 17
 const level = new Level(WIDTH, HEIGHT)
 
 export default {
@@ -137,14 +139,14 @@ export default {
 </script>
 
 <style>
-.field {
+#field {
   position: relative;
-  display: flex;
-  flex-flow: row wrap;
   width: 1024px;
+  height: 1024px;
   margin: auto;
+  overflow: hidden;
 }
-.field > input {
+#field > input {
   position: absolute;
   opacity: 0;
   display: block;
@@ -176,6 +178,15 @@ export default {
   background-position: center;
   background-repeat: no-repeat;
 }
+#wrap {
+  position: absolute;
+  top: -32px;
+  left: -32px;
+  width: 1088px;
+  height: 1088px;
+  display: flex;
+  flex-flow: row wrap;
+}
 .block         { background-color: #56F; }
 .block.grass   { background-image: url(./assets/grass01.png); }
 
@@ -205,9 +216,9 @@ export default {
 .block.tree_trunk_right_mixed  { background-image: url(./assets/tree_trunk_right_mixed.png); }
 .block.tree_root_right_mixed   { background-image: url(./assets/tree_root_right_mixed.png); }
 
-.block.soil    { background-image: url(./assets/soil01.png); }
-.block.soil_gravel { background-image: url(./assets/soil_gravel01.png); }
-.block.stone_gravel { background-color: #444; /* background-image: url(./assets/soil_gravel01.png) */; }
+.block.soil    { background-image: url(./assets/soil.png); }
+.block.soil_gravel { background-image: url(./assets/soil_gravel.png); }
+.block.stone_gravel { background-image: url(./assets/rock_gravel.png); }
 .block.stone   { background-image: url(./assets/rock.png); }
 .block.bedrock { background-image: url(./assets/bedrock.png); }
 .block.cave    { background-color: #000; }
