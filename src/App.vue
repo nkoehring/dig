@@ -21,9 +21,11 @@ export default {
 html,body,#app {
   display: block;
   width: 100vw;
+  height: 100vh;
   background: black;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 </style>

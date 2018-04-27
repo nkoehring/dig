@@ -7,6 +7,7 @@
       @keydown.left="goLeft($event)"
       @keydown.space="jump($event)"
     />
+    <mountain-background :x="x + 65536" />
     <div id="wrap">
       <template v-for="(row, y) in rows">
         <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
@@ -19,6 +20,7 @@
 
 <script>
 import Level from './level'
+import MountainBackground from './Background'
 
 const WIDTH = 32 + 2
 const HEIGHT = 32 + 2
@@ -28,6 +30,7 @@ const level = new Level(WIDTH, HEIGHT)
 
 export default {
   name: 'field',
+  components: { MountainBackground },
   data () {
     return {
       x: 0,
@@ -145,6 +148,7 @@ export default {
   height: 1024px;
   margin: auto;
   overflow: hidden;
+  background-color: #56F;
 }
 #field > input {
   position: absolute;
@@ -187,7 +191,6 @@ export default {
   display: flex;
   flex-flow: row wrap;
 }
-.block         { background-color: #56F; }
 .block.grass   { background-image: url(./assets/grass01.png); }
 
 .block.tree_top_left     { background-image: url(./assets/tree_top_left.png); }
