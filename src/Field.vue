@@ -1,5 +1,5 @@
 <template>
-  <div id="field" @click="handleClick">
+  <div id="field">
     <input v-keep-focussed type="text"
       @keydown.down="goDown($event)"
       @keydown.up="goUp($event)"
@@ -8,7 +8,7 @@
       @keydown.space="jump($event)"
     />
     <mountain-background :x="x + 65536" />
-    <div id="wrap">
+    <div id="wrap" :style="{transform: `translate(${translate_x}px, ${translate_y}px)`}">
       <template v-for="(row, y) in rows">
         <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
       </template>
@@ -19,14 +19,17 @@
 </template>
 
 <script>
+import throttle from 'lodash/throttle'
 import Level from './level'
 import MountainBackground from './Background'
 
-const WIDTH = 32 + 2
-const HEIGHT = 32 + 2
-const PLAYER_X = ~~(WIDTH / 2) - 1
-const PLAYER_Y = HEIGHT - 17
-const level = new Level(WIDTH, HEIGHT)
+const BLOCK_SIZE = 32
+const WIDTH = 32
+const HEIGHT = 32
+const PLAYER_X = ~~(WIDTH / 2) + 1
+const PLAYER_Y = HEIGHT - 15
+const PLAYER_MAX_VELOCITY = 32
+const level = new Level(WIDTH + 2, HEIGHT + 2)
 
 export default {
   name: 'field',
@@ -35,15 +38,58 @@ export default {
     return {
       x: 0,
       y: 0,
+      // transform: translate(x,y); max 32px, then this.x++ / this.y++
+      translate_x: 0,
+      translate_y: 0,
       player_x: PLAYER_X,
       player_y: PLAYER_Y,
       player_direction: 'left',
-      walk_steps_x: 0,
-      walk_steps_y: 0
+      player_velocity_x: 0,
+      player_velocity_y: 0,
+      drag: 1
     }
   },
   mounted () {
     this.mindTheGap()
+  },
+  watch: {
+    player_velocity_x: throttle(function (v) {
+      if (!v) return // zero velocity is not interesting
+
+      // calculate with positive values but remember negative velocity
+      const sign = v < 0 ? -1 : 1
+      v *= sign
+
+      if (v > 8) v = 8
+
+      v -= this.drag
+      if (v < 0) v = 0
+      else v *= sign // back to original sign
+      this.player_velocity_x = v
+      this.translate_x += v
+      console.log(v)
+    }, 100),
+    translate_x (tx) {
+      this.x += Math.floor(tx / BLOCK_SIZE)
+      this.translate_x = tx % BLOCK_SIZE
+    },
+    player_velocity_y (velocity_y) {
+      //if (!velocity_y) return // zero velocity is not interesting
+      return // TODO
+
+      if (velocity_y < 0) {
+        if (!this.blockBelowPlayer.walkable) this.player_velocity_y = 0
+        else if (this.translate_y > -BLOCK_SIZE) this.translate_y += velocity_y
+        else {
+          this.translate_y = 0
+          this.y++
+        }
+      } else {
+        if (!this.blockAbovePlayer.walkable) this.player_velocity_y = 0
+        else if (this.translate_y < BLOCK_SIZE) this.translate_y += velocity_y
+      }
+    }
+
   },
   computed: {
     rows () {
@@ -58,6 +104,9 @@ export default {
     blockRightOfPlayer () {
       return this.rows[PLAYER_Y][PLAYER_X + 1]
     },
+    blockAbovePlayer () {
+      return this.rows[PLAYER_Y - 1][PLAYER_X]
+    },
     blockBelowPlayer () {
       return this.rows[PLAYER_Y + 1][PLAYER_X]
     }
@@ -65,76 +114,33 @@ export default {
   methods: {
     goDown (ev) {
       // TODO: this.player_direction = 'down'
-      if (this.blockBelowPlayer.walkable) this.y++
+      if (this.blockBelowPlayer.walkable) this.player_velocity_y -= 8
       this.mindTheGap()
     },
     goUp (ev) {
       // TODO: this.player_direction = 'up'
-      if (this.blockAtPlayer.climbable) this.y--
+      if (this.blockAtPlayer.climbable) this.player_velocity_y += 8
     },
-    goRight (ev) {
-      if (this.player_direction !== 'right') {
-        this.player_direction = 'right'
-      } else if (this.blockRightOfPlayer.walkable) {
-        this.x++
-        this.mindTheGap()
+    goRight: throttle(function (ev) {
+      if (this.blockRightOfPlayer.walkable) {
+        this.player_velocity_x -= 4
       }
-    },
-    goLeft (ev) {
-      if (this.player_direction !== 'left') {
-        this.player_direction = 'left'
-      } else if (this.blockLeftOfPlayer.walkable) {
-        this.x--
-        this.mindTheGap()
+    }, 10),
+    goLeft: throttle(function (ev) {
+      if (this.blockLeftOfPlayer.walkable) {
+        this.player_velocity_x += 4
       }
-    },
+    }, 10),
     jump (ev) {
-      this.y--
-      if (this.player_direction === 'left' && this.blockLeftOfPlayer.walkable) {
-        this.x--
-        setTimeout(() => {
-          if (this.blockLeftOfPlayer.walkable) this.x--
-          if (this.blockBelowPlayer.walkable) this.y++
-        }, 50)
-      } else if (this.player_direction === 'right' && this.blockRightOfPlayer.walkable) {
-        this.x++
-        setTimeout(() => {
-          if (this.blockRightOfPlayer.walkable) this.x++
-          if (this.blockBelowPlayer.walkable) this.y++
-        }, 50)
+      if (this.blockAbovePlayer.walkable) {
+        this.player_velocity_y += 64
+        this.mindTheGap()
       }
-      // just jump while facing the back
-      setTimeout(() => this.mindTheGap(), 100)
-    },
-    walkSteps () {
-      if (!this.walk_steps_x && !this.walk_steps_y) return
-
-      if (this.walk_steps_x > 0) {
-        this.goLeft()
-        this.walk_steps_x--
-      } else if (this.walk_steps_x < 0) {
-        this.goRight()
-        this.walk_steps_x++
-      } else if (this.walk_steps_y > 0) {
-        this.goUp()
-        this.walk_steps_y--
-      } else if (this.walk_steps_y < 0) {
-        this.goDown()
-        this.walk_steps_y++
-      }
-      setTimeout(() => this.walkSteps(), 100)
-    },
-    handleClick (ev) {
-      const coords = ev.target.dataset
-      this.walk_steps_x = this.player_x - parseInt(coords.x)
-      this.walk_steps_y = this.player_y - parseInt(coords.y)
-      this.walkSteps()
     },
     mindTheGap () {
       const below = this.blockBelowPlayer
       if (below.walkable && !below.climbable) {
-        this.y++
-        setTimeout(() => this.mindTheGap(), 50)
+        this.player_velocity_y -= 8
       }
     }
   }
@@ -165,7 +171,7 @@ export default {
 }
 #player  {
   position: absolute;
-  left: calc(32px * 15);
+  left: calc(32px * 16);
   top: calc(32px * 16);
   background-image: url(./assets/dwarf_right.png);
 }
