@@ -89,6 +89,9 @@ export default {
       let vx = this.player_velocity_x * RECIPROCAL
       let vy = this.player_velocity_y * RECIPROCAL
 
+      if (vx < 0) this.player_direction = 'left'
+      if (vx > 0) this.player_direction = 'right'
+
       if (vx > 0 && this.blockedRight) vx = 0
       if (vx < 0 && this.blockedLeft) vx = 0
       if (vy > 0 && this.blockedDown) vy = 0
