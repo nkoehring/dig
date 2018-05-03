@@ -1,20 +1,23 @@
 <template>
   <div id="field">
     <input v-keep-focussed type="text"
-      @keydown.down="goDown($event)"
-      @keydown.up="goUp($event)"
-      @keydown.right="goRight($event)"
-      @keydown.left="goLeft($event)"
-      @keydown.space="jump($event)"
+      @keydown.up="player_push_y = -8"
+      @keydown.down="player_push_y = 8"
+      @keydown.right="player_push_x = 8"
+      @keydown.left="player_push_x = -8"
+      @keyup.up="player_push_y = 0"
+      @keyup.down="player_push_y = 0"
+      @keyup.right="player_push_x = 0"
+      @keyup.left="player_push_x = 0"
     />
-    <mountain-background :x="x + 65536" />
-    <div id="wrap" :style="{transform: `translate(${translate_x}px, ${translate_y}px)`}">
-      <template v-for="(row, y) in rows">
-        <div v-for="(block, x) in row" class="block" :class="[block.type]" :data-x="x" :data-y="y" />
+    <mountain-background :x="128 + x / 8" />
+    <div id="wrap" :style="{transform: `translate(${tx}px, ${ty}px)`}">
+      <template v-for="row in rows">
+        <div v-for="block in row" class="block" :class="[block.type]" />
       </template>
     </div>
     <div id="player" :class="[player_direction]" :data-x="player_x" :data-y="player_y" />
-    <div id="level-indicator">x:{{ x }}, y:{{ y }}</div>
+    <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }}</div>
   </div>
 </template>
 
@@ -24,12 +27,11 @@ import Level from './level'
 import MountainBackground from './Background'
 
 const BLOCK_SIZE = 32
-const WIDTH = 32
-const HEIGHT = 32
-const PLAYER_X = ~~(WIDTH / 2) + 1
-const PLAYER_Y = HEIGHT - 15
+const RECIPROCAL = 1 / BLOCK_SIZE
+const PLAYER_X = ~~(BLOCK_SIZE / 2) + 1
+const PLAYER_Y = BLOCK_SIZE - 15
 const PLAYER_MAX_VELOCITY = 32
-const level = new Level(WIDTH + 2, HEIGHT + 2)
+const level = new Level(BLOCK_SIZE + 2, BLOCK_SIZE + 2)
 
 export default {
   name: 'field',
@@ -38,111 +40,64 @@ export default {
     return {
       x: 0,
       y: 0,
-      // transform: translate(x,y); max 32px, then this.x++ / this.y++
-      translate_x: 0,
-      translate_y: 0,
       player_x: PLAYER_X,
       player_y: PLAYER_Y,
       player_direction: 'left',
+      player_push_x: 0,
+      player_push_y: 0,
       player_velocity_x: 0,
       player_velocity_y: 0,
-      drag: 1
+      moving: false
     }
   },
   mounted () {
-    this.mindTheGap()
+    this.player_velocity_y = 8
+    this.move()
   },
   watch: {
-    player_velocity_x: throttle(function (v) {
-      if (!v) return // zero velocity is not interesting
-
-      // calculate with positive values but remember negative velocity
-      const sign = v < 0 ? -1 : 1
-      v *= sign
-
-      if (v > 8) v = 8
-
-      v -= this.drag
-      if (v < 0) v = 0
-      else v *= sign // back to original sign
-      this.player_velocity_x = v
-      this.translate_x += v
-      console.log(v)
-    }, 100),
-    translate_x (tx) {
-      this.x += Math.floor(tx / BLOCK_SIZE)
-      this.translate_x = tx % BLOCK_SIZE
+    player_push_x (px) {
+      if (px === 0) this.player_velocity_x = 0
+      else this.player_velocity_x = px
     },
-    player_velocity_y (velocity_y) {
-      //if (!velocity_y) return // zero velocity is not interesting
-      return // TODO
-
-      if (velocity_y < 0) {
-        if (!this.blockBelowPlayer.walkable) this.player_velocity_y = 0
-        else if (this.translate_y > -BLOCK_SIZE) this.translate_y += velocity_y
-        else {
-          this.translate_y = 0
-          this.y++
-        }
-      } else {
-        if (!this.blockAbovePlayer.walkable) this.player_velocity_y = 0
-        else if (this.translate_y < BLOCK_SIZE) this.translate_y += velocity_y
-      }
+    player_push_y (py) {
+      if (py === 0) this.player_velocity_y = 8
+      else this.player_velocity_y = py
     }
-
   },
   computed: {
-    rows () {
-      return level.grid(this.x, this.y)
-    },
-    blockAtPlayer () {
-      return this.rows[PLAYER_Y][PLAYER_X]
-    },
-    blockLeftOfPlayer () {
-      return this.rows[PLAYER_Y][PLAYER_X - 1]
-    },
-    blockRightOfPlayer () {
-      return this.rows[PLAYER_Y][PLAYER_X + 1]
-    },
-    blockAbovePlayer () {
-      return this.rows[PLAYER_Y - 1][PLAYER_X]
-    },
-    blockBelowPlayer () {
-      return this.rows[PLAYER_Y + 1][PLAYER_X]
-    }
+    blockAtPlayer () { return this.rows[PLAYER_Y][PLAYER_X] },
+    blockLeftOfPlayer () { return this.rows[PLAYER_Y][PLAYER_X - 1] },
+    blockRightOfPlayer () { return this.rows[PLAYER_Y][PLAYER_X + 1] },
+    blockAbovePlayer () { return this.rows[PLAYER_Y - 1][PLAYER_X] },
+    blockBelowPlayer () { return this.rows[PLAYER_Y + 1][PLAYER_X] },
+    blockedUp () { return this.cornerY && !this.blockAbovePlayer.walkable },
+    blockedDown () { return this.cornerY && !this.blockBelowPlayer.walkable },
+    blockedLeft () { return this.cornerX && !this.blockLeftOfPlayer.walkable },
+    blockedRight () { return this.cornerX && !this.blockRightOfPlayer.walkable },
+    cornerX () { return this.x === ~~this.x }, // cornering a block
+    cornerY () { return this.y === ~~this.y },
+    floorX () { return Math.floor(this.x) },
+    floorY () { return Math.floor(this.y) },
+    tx () { return (this.x - this.floorX) * -BLOCK_SIZE },
+    ty () { return (this.y - this.floorY) * -BLOCK_SIZE },
+    rows () { return level.grid(this.floorX, this.floorY) }
   },
   methods: {
-    goDown (ev) {
-      // TODO: this.player_direction = 'down'
-      if (this.blockBelowPlayer.walkable) this.player_velocity_y -= 8
-      this.mindTheGap()
+    move () {
+      const x = this.x
+      const y = this.y
+      let vx = this.player_velocity_x * RECIPROCAL
+      let vy = this.player_velocity_y * RECIPROCAL
+
+      if (vx > 0 && this.blockedRight) vx = 0
+      if (vx < 0 && this.blockedLeft) vx = 0
+      if (vy > 0 && this.blockedDown) vy = 0
+      if (vy < 0 && this.blockedUp) vy = 0
+
+      this.x += vx
+      this.y += vy
+      this.moving = setTimeout(() => this.move(), 50)
     },
-    goUp (ev) {
-      // TODO: this.player_direction = 'up'
-      if (this.blockAtPlayer.climbable) this.player_velocity_y += 8
-    },
-    goRight: throttle(function (ev) {
-      if (this.blockRightOfPlayer.walkable) {
-        this.player_velocity_x -= 4
-      }
-    }, 10),
-    goLeft: throttle(function (ev) {
-      if (this.blockLeftOfPlayer.walkable) {
-        this.player_velocity_x += 4
-      }
-    }, 10),
-    jump (ev) {
-      if (this.blockAbovePlayer.walkable) {
-        this.player_velocity_y += 64
-        this.mindTheGap()
-      }
-    },
-    mindTheGap () {
-      const below = this.blockBelowPlayer
-      if (below.walkable && !below.climbable) {
-        this.player_velocity_y -= 8
-      }
-    }
   }
 }
 </script>
