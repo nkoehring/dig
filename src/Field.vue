@@ -1,14 +1,14 @@
 <template>
   <div id="field">
     <input v-keep-focussed type="text"
-      @keydown.up="player_push_y = -8"
-      @keydown.down="player_push_y = 8"
-      @keydown.right="player_push_x = 8"
-      @keydown.left="player_push_x = -8"
-      @keyup.up="player_push_y = 0"
-      @keyup.down="player_push_y = 0"
-      @keyup.right="player_push_x = 0"
-      @keyup.left="player_push_x = 0"
+      @keydown.up="player_velocity_y = -8"
+      @keydown.down="player_velocity_y = 8"
+      @keydown.right="player_velocity_x = 8"
+      @keydown.left="player_velocity_x = -8"
+      @keyup.up="player_velocity_y = 8"
+      @keyup.down="player_velocity_y = 8"
+      @keyup.right="player_velocity_x = 0"
+      @keyup.left="player_velocity_x = 0"
     />
     <mountain-background :x="128 + x / 8" />
     <div id="wrap" :style="{transform: `translate(${tx}px, ${ty}px)`}">
@@ -16,7 +16,7 @@
         <div v-for="block in row" class="block" :class="[block.type]" />
       </template>
     </div>
-    <div id="player" :class="[player_direction]" :data-x="player_x" :data-y="player_y" />
+    <div id="player" :class="[player_direction]" />
     <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }}</div>
   </div>
 </template>
@@ -40,18 +40,14 @@ export default {
     return {
       x: 0,
       y: 0,
-      player_x: PLAYER_X,
-      player_y: PLAYER_Y,
       player_direction: 'left',
-      player_push_x: 0,
-      player_push_y: 0,
       player_velocity_x: 0,
-      player_velocity_y: 0,
+      player_velocity_y: 9,
+      gravity: 8.0 / 20,
       moving: false
     }
   },
   mounted () {
-    this.player_velocity_y = 8
     this.move()
   },
   watch: {
@@ -70,10 +66,10 @@ export default {
     blockRightOfPlayer () { return this.rows[PLAYER_Y][PLAYER_X + 1] },
     blockAbovePlayer () { return this.rows[PLAYER_Y - 1][PLAYER_X] },
     blockBelowPlayer () { return this.rows[PLAYER_Y + 1][PLAYER_X] },
-    blockedUp () { return this.cornerY && !this.blockAbovePlayer.walkable },
-    blockedDown () { return this.cornerY && !this.blockBelowPlayer.walkable },
-    blockedLeft () { return this.cornerX && !this.blockLeftOfPlayer.walkable },
-    blockedRight () { return this.cornerX && !this.blockRightOfPlayer.walkable },
+    blockedUp () { return !this.blockAbovePlayer.walkable },
+    blockedDown () { return !this.blockBelowPlayer.walkable },
+    blockedLeft () { return !this.blockLeftOfPlayer.walkable },
+    blockedRight () { return !this.blockRightOfPlayer.walkable },
     cornerX () { return this.x === ~~this.x }, // cornering a block
     cornerY () { return this.y === ~~this.y },
     floorX () { return Math.floor(this.x) },
@@ -86,15 +82,23 @@ export default {
     move () {
       const x = this.x
       const y = this.y
+
+      // this.player_velocity_y += this.gravity
       let vx = this.player_velocity_x * RECIPROCAL
       let vy = this.player_velocity_y * RECIPROCAL
 
+      // change player graphic according to direction
       if (vx < 0) this.player_direction = 'left'
       if (vx > 0) this.player_direction = 'right'
 
+      // don't walk / fall into blocks
       if (vx > 0 && this.blockedRight) vx = 0
       if (vx < 0 && this.blockedLeft) vx = 0
-      if (vy > 0 && this.blockedDown) vy = 0
+      if (vy > 0 && this.blockedDown) {
+        // jump to the top of the block
+        vy = -((~~y + 1) - y) + 1
+        // vy = 0
+      }
       if (vy < 0 && this.blockedUp) vy = 0
 
       this.x += vx
