@@ -8,11 +8,11 @@ import solarQuartet from './solar-quartet'
 export default {
   name: 'background',
   props: {
-    x: Number
+    x: Number,
+    time: Number
   },
   data () {
     return {
-      sunY: -50.0,
       redraw: null
     }
   },
@@ -30,11 +30,19 @@ export default {
       canvas, canvas.getContext('2d'), canvasSize, canvasSize,
       godraysCanvas, godraysCanvas.getContext('2d'), godraysSize, godraysSize,
     )
-    this.redraw(this.x, this.sunY)
+    this.refresh()
   },
-  watch: {
-    x (x) {
-      this.redraw(x, this.sunY)
+  computed: {
+    sunY () {
+      // time is between 0 and 1000
+      const p = Math.PI / 1000
+      return Math.sin(this.time * p) * -100
+    }
+  },
+  methods: {
+    refresh () {
+      this.redraw(this.x, this.sunY)
+      this.timeout = setTimeout(() => this.refresh(), 50)
     }
   }
 }

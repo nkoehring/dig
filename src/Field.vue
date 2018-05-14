@@ -1,5 +1,5 @@
 <template>
-  <div id="field">
+  <div id="field" :class="daytimeClass">
     <input v-keep-focussed type="text"
       @keydown.up="player_velocity_y = -8"
       @keydown.down="player_velocity_y = 8"
@@ -10,19 +10,19 @@
       @keyup.right="player_velocity_x = 0"
       @keyup.left="player_velocity_x = 0"
     />
-    <mountain-background :x="128 + x / 8" />
+    <mountain-background :x="128 + x / 8" :time="time" />
     <div id="wrap" :style="{transform: `translate(${tx}px, ${ty}px)`}">
       <template v-for="row in rows">
         <div v-for="block in row" class="block" :class="[block.type]" />
       </template>
     </div>
     <div id="player" :class="[player_direction]" />
-    <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }}</div>
+    <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }} (@{{time}})</div>
   </div>
 </template>
 
 <script>
-import throttle from 'lodash/throttle'
+// import throttle from 'lodash/throttle'
 import Level from './level'
 import MountainBackground from './Background'
 
@@ -44,7 +44,8 @@ export default {
       player_velocity_x: 0,
       player_velocity_y: 9,
       gravity: 8.0 / 20,
-      moving: false
+      moving: false,
+      time: 600
     }
   },
   mounted () {
@@ -76,10 +77,27 @@ export default {
     floorY () { return Math.floor(this.y) },
     tx () { return (this.x - this.floorX) * -BLOCK_SIZE },
     ty () { return (this.y - this.floorY) * -BLOCK_SIZE },
-    rows () { return level.grid(this.floorX, this.floorY) }
+    rows () { return level.grid(this.floorX, this.floorY) },
+    daytimeClass () {
+      const t = this.time
+      if (t >= 900 || t < 80) return "night"
+
+      if (t >= 80 && t < 120) return "morning0"
+      if (t >= 120 && t < 150) return "morning1"
+      if (t >= 150 && t < 250) return "morning2"
+
+      if (t >= 700 && t < 800) return "evening0"
+      if (t >= 800 && t < 850) return "evening1"
+      if (t >= 850 && t < 900) return "evening2"
+
+      return "day"
+    }
   },
   methods: {
     move () {
+      // set time of day in ticks
+      this.time = (this.time + 1) % 1000
+
       const x = this.x
       const y = this.y
 
@@ -193,5 +211,15 @@ export default {
 .block.stone   { background-image: url(./assets/rock.png); }
 .block.bedrock { background-image: url(./assets/bedrock.png); }
 .block.cave    { background-color: #000; }
-.block:hover, .block.highlight { filter: brightness(1.4); }
+#field .block:hover { outline: 1px solid white; z-index: 10; }
+
+.morning0 .block, .morning0 #player { filter: saturate(50%) brightness(0.6) hue-rotate(-10deg); }
+.morning1 .block, .morning1 #player { filter: saturate(100%) brightness(0.8) hue-rotate(-20deg); }
+.morning2 .block, .morning2 #player { filter: saturate(200%) hue-rotate(-30deg); }
+
+.evening0 .block, .evening0 #player { filter: brightness(0.8) hue-rotate(-10deg); }
+.evening1 .block, .evening1 #player { filter: brightness(0.6) hue-rotate(-20deg); }
+.evening2 .block, .evening2 #player { filter: brightness(0.4) hue-rotate(-10deg) saturate(50%); }
+
+.night .block, .night #player { filter: brightness(0.3) saturate(30%); }
 </style>

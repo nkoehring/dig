@@ -29,8 +29,13 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   // so anything lighter will result in lots of white.
   // If you're not space-bound you can add another stop or two, maybe fade out to black,
   // but this actually looks good enough.
+
   emissionGradient.addColorStop(.1, '#0C0804') // pixels in radius 0 to 4.4 (44 * .1).
   emissionGradient.addColorStop(.2, '#060201') // everything past radius 8.8.
+  /* TODO: NIGHT
+   * emissionGradient.addColorStop(.1, '#000') // pixels in radius 0 to 4.4 (44 * .1).
+   * emissionGradient.addColorStop(.2, '#000') // everything past radius 8.8.
+   */
 
   // Now paint the gradient all over our godrays canvas.
   grCtx.fillRect(0, 0, grWidth, grHeight)
@@ -43,6 +48,10 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   const skyGradient = ctx.createLinearGradient(0, 0, 0, height)
   skyGradient.addColorStop(0, '#2a3e55') // Blueish at the top.
   skyGradient.addColorStop(.7, '#8d4835') // Reddish at the bottom.
+  /* TODO: NIGHT
+   * skyGradient.addColorStop(0, '#000') // Blueish at the top.
+   * skyGradient.addColorStop(.7, '#000') // Reddish at the bottom.
+   */
   ctx.fillStyle = skyGradient
   ctx.fillRect(0, 0, width, height)
 
@@ -60,6 +69,9 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
     // Set the main canvas fillStyle to a shade of brown with variable lightness
     // (darker at the front)
     ctx.fillStyle = `hsl(7, 23%, ${23-i*6}%)`;
+    /* TODO: NIGHT
+     * ctx.fillStyle = `hsl(5, 23%, ${4-i}%)`;
+     */
 
     // For each column in our canvas...
     for(let x = width; x--;) {
