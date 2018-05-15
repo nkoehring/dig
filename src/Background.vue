@@ -16,6 +16,10 @@ export default {
       redraw: null
     }
   },
+  watch: {
+    // x () { this.refresh() },
+    time () { this.refresh() }
+  },
   mounted () {
     const canvasSize = 512
     const godraysSize = 128
@@ -33,6 +37,15 @@ export default {
     this.refresh()
   },
   computed: {
+    /* time value to sun position conversion
+     *
+     * The time value rotates from 0 to 1000
+     * sunY convertes it to values between 0 and -100,
+     * while -100 is high sun position (aka day)
+     * and 0 is low (aka night).
+     * My adaption of Solar Quartet renders a static night sky from -30 upwards
+     * and a static day at -70 or lower
+     */
     sunY () {
       // time is between 0 and 1000
       const p = Math.PI / 1000
@@ -41,8 +54,9 @@ export default {
   },
   methods: {
     refresh () {
+      // console.time('draw background')
       this.redraw(this.x, this.sunY)
-      this.timeout = setTimeout(() => this.refresh(), 50)
+      // console.timeEnd('draw background')
     }
   }
 }

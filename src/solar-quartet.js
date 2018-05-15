@@ -4,7 +4,8 @@
  */
 
 // sunY sets the height of the sun and with this the time of the day
-// it should be an offset from the middle somewhere between -24 and 24
+// where 0 is lowest (night) and -100 is highest (day), other values are possible
+// but don't make much sense / difference
 export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, grWidth, grHeight, frame, sunY) {
   // reset canvas state
   canvas.width = width
@@ -30,12 +31,15 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   // If you're not space-bound you can add another stop or two, maybe fade out to black,
   // but this actually looks good enough.
 
-  emissionGradient.addColorStop(.1, '#0C0804') // pixels in radius 0 to 4.4 (44 * .1).
-  emissionGradient.addColorStop(.2, '#060201') // everything past radius 8.8.
-  /* TODO: NIGHT
-   * emissionGradient.addColorStop(.1, '#000') // pixels in radius 0 to 4.4 (44 * .1).
-   * emissionGradient.addColorStop(.2, '#000') // everything past radius 8.8.
-   */
+  // we use different gradients for different day times (sunY):
+  // > -25: night (black sky)
+  // < -70: day (blue sky)
+  // otherwise red (dawn / sunset)
+
+  if (sunY < -25 && sunY > -70) { // dawn or sunset
+    emissionGradient.addColorStop(.1, '#0C0804') // pixels in radius 0 to 4.4 (44 * .1).
+    emissionGradient.addColorStop(.2, '#060201') // everything past radius 8.8.
+  }
 
   // Now paint the gradient all over our godrays canvas.
   grCtx.fillRect(0, 0, grWidth, grHeight)
@@ -44,14 +48,17 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   grCtx.fillStyle = '#000'
 
   // Paint the sky
-  // TODO: can this be used for day and night, too?
   const skyGradient = ctx.createLinearGradient(0, 0, 0, height)
-  skyGradient.addColorStop(0, '#2a3e55') // Blueish at the top.
-  skyGradient.addColorStop(.7, '#8d4835') // Reddish at the bottom.
-  /* TODO: NIGHT
-   * skyGradient.addColorStop(0, '#000') // Blueish at the top.
-   * skyGradient.addColorStop(.7, '#000') // Reddish at the bottom.
-   */
+  if (sunY > -25) { // night
+   skyGradient.addColorStop(0, '#001') // slight blue hue
+   skyGradient.addColorStop(.7, '#004') // but mainly black
+  } else if (sunY < -70) { // day
+   skyGradient.addColorStop(0, '#79F') // blue with a light gradient
+   skyGradient.addColorStop(.7, '#33A') // into more blue
+  } else { // dawn / sunset
+    skyGradient.addColorStop(0, '#2a3e55') // Blueish at the top.
+    skyGradient.addColorStop(.7, '#8d4835') // Reddish at the bottom.
+  }
   ctx.fillStyle = skyGradient
   ctx.fillRect(0, 0, width, height)
 
@@ -68,10 +75,13 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   for(let i = 0; i < 4; i++) {
     // Set the main canvas fillStyle to a shade of brown with variable lightness
     // (darker at the front)
-    ctx.fillStyle = `hsl(7, 23%, ${23-i*6}%)`;
-    /* TODO: NIGHT
-     * ctx.fillStyle = `hsl(5, 23%, ${4-i}%)`;
-     */
+    if (sunY > -25) { // night
+     ctx.fillStyle = `hsl(5, 23%, ${4-i}%)`
+    } else if (sunY < -70) { // day (TODO)
+      ctx.fillStyle = `hsl(${220 - i*40}, 23%, ${33-i*6}%)`
+    } else { // dawn / sunset
+      ctx.fillStyle = `hsl(7, 23%, ${23-i*6}%)`
+    }
 
     // For each column in our canvas...
     for(let x = width; x--;) {

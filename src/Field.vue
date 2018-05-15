@@ -17,7 +17,7 @@
       </template>
     </div>
     <div id="player" :class="[player_direction]" />
-    <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }} (@{{time}})</div>
+    <div id="level-indicator">x:{{ floorX }}, y:{{ floorY }} ({{clock}})</div>
   </div>
 </template>
 
@@ -45,7 +45,7 @@ export default {
       player_velocity_y: 9,
       gravity: 8.0 / 20,
       moving: false,
-      time: 600
+      time: 250
     }
   },
   mounted () {
@@ -84,19 +84,25 @@ export default {
 
       if (t >= 80 && t < 120) return "morning0"
       if (t >= 120 && t < 150) return "morning1"
-      if (t >= 150 && t < 250) return "morning2"
+      if (t >= 150 && t < 240) return "morning2"
 
       if (t >= 700 && t < 800) return "evening0"
       if (t >= 800 && t < 850) return "evening1"
       if (t >= 850 && t < 900) return "evening2"
 
       return "day"
+    },
+    clock () {
+      const t = this.time * 86.4 // 1000 ticks to 86400 seconds (per day)
+      const h = ~~(t / 3600.0)
+      const m = ~~((t / 3600.0 - h) * 60.0)
+      return `${(h + 2) % 24}:${m < 10 ? '0' : ''}${m}`
     }
   },
   methods: {
     move () {
       // set time of day in ticks
-      this.time = (this.time + 1) % 1000
+      this.time = (this.time + 0.1) % 1000
 
       const x = this.x
       const y = this.y
