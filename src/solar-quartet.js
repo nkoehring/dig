@@ -76,12 +76,11 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   for(let i = 0; i < 4; i++) {
     // Set the main canvas fillStyle to a shade of green-brown with variable lightness
     // depending on sunY and depth
-    if (sunY > -25) { // night
-     ctx.fillStyle = `hsl(5, 23%, ${4-i}%)`
-    } else if (sunY < -70) { // day (TODO)
+
+    if (sunY > -60) {
+      ctx.fillStyle = `hsl(5, 23%, ${33*emissionStrength - i*6*emissionStrength}%)`
+    } else {
       ctx.fillStyle = `hsl(${220 - i*40}, 23%, ${33-i*6}%)`
-    } else { // dawn / sunset
-      ctx.fillStyle = `hsl(7, 23%, ${23-i*6}%)`
     }
 
     // For each column in our canvas...
