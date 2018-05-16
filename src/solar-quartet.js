@@ -31,15 +31,13 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
   // If you're not space-bound you can add another stop or two, maybe fade out to black,
   // but this actually looks good enough.
 
-  // we use different gradients for different day times (sunY):
-  // > -25: night (black sky)
-  // < -70: day (blue sky)
-  // otherwise red (dawn / sunset)
+  // a black "gradient" means no emission, so we fade to black as transition to night or day
+  let emissionStrength = 1.0
+  if (sunY > -30) emissionStrength -= Math.max((30 + sunY) / 5, 0.0)
+  else if (sunY < -60) emissionStrength += Math.min(1 + (60 + sunY) / 5, 0.0)
 
-  if (sunY < -25 && sunY > -70) { // dawn or sunset
-    emissionGradient.addColorStop(.1, '#0C0804') // pixels in radius 0 to 4.4 (44 * .1).
-    emissionGradient.addColorStop(.2, '#060201') // everything past radius 8.8.
-  }
+  emissionGradient.addColorStop(.1, `hsl(30,50%,${3.1 * emissionStrength}%)`) // pixels in radius 0 to 4.4 (44 * .1).
+  emissionGradient.addColorStop(.2, `hsl(12,71%,${1.4 * emissionStrength}%)`) // pixels in radius 0 to 4.4 (44 * .1).
 
   // Now paint the gradient all over our godrays canvas.
   grCtx.fillRect(0, 0, grWidth, grHeight)
@@ -49,19 +47,19 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
 
   // Paint the sky
   const skyGradient = ctx.createLinearGradient(0, 0, 0, height)
+
+  // hue from blue to red depending on the suns position
   const skyHue = 360 + sunY
+  // lesser saturation at day so that the red fades away
   const skySaturation = 100 + sunY
+  // darker at night
   const skyLightness = Math.min(sunY * -1 - 10, 55)
+
   const skyHSLTop = `hsl(220, 70%, ${skyLightness}%)`
   const skyHSLBottom = `hsl(${skyHue}, ${skySaturation}%, ${skyLightness}%)`
   skyGradient.addColorStop(0, skyHSLTop)
   skyGradient.addColorStop(.7, skyHSLBottom)
 
-  /*
-    skyGradient.addColorStop(0, '#2a3e55') // Blueish at the top.
-    skyGradient.addColorStop(.7, '#8d4835') // Reddish at the bottom.
-  }
-  */
   ctx.fillStyle = skyGradient
   ctx.fillRect(0, 0, width, height)
 
