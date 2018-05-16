@@ -49,16 +49,19 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
 
   // Paint the sky
   const skyGradient = ctx.createLinearGradient(0, 0, 0, height)
-  if (sunY > -25) { // night
-   skyGradient.addColorStop(0, '#001') // slight blue hue
-   skyGradient.addColorStop(.7, '#004') // but mainly black
-  } else if (sunY < -70) { // day
-   skyGradient.addColorStop(0, '#79F') // blue with a light gradient
-   skyGradient.addColorStop(.7, '#33A') // into more blue
-  } else { // dawn / sunset
+  const skyHue = 360 + sunY
+  const skySaturation = 100 + sunY
+  const skyLightness = Math.min(sunY * -1 - 10, 55)
+  const skyHSLTop = `hsl(220, 70%, ${skyLightness}%)`
+  const skyHSLBottom = `hsl(${skyHue}, ${skySaturation}%, ${skyLightness}%)`
+  skyGradient.addColorStop(0, skyHSLTop)
+  skyGradient.addColorStop(.7, skyHSLBottom)
+
+  /*
     skyGradient.addColorStop(0, '#2a3e55') // Blueish at the top.
     skyGradient.addColorStop(.7, '#8d4835') // Reddish at the bottom.
   }
+  */
   ctx.fillStyle = skyGradient
   ctx.fillRect(0, 0, width, height)
 
@@ -73,8 +76,8 @@ export default function drawFrame (canvas, ctx, width, height, grCanvas, grCtx, 
 
   // Draw 4 layers of mountains.
   for(let i = 0; i < 4; i++) {
-    // Set the main canvas fillStyle to a shade of brown with variable lightness
-    // (darker at the front)
+    // Set the main canvas fillStyle to a shade of green-brown with variable lightness
+    // depending on sunY and depth
     if (sunY > -25) { // night
      ctx.fillStyle = `hsl(5, 23%, ${4-i}%)`
     } else if (sunY < -70) { // day (TODO)
