@@ -1,7 +1,7 @@
 <template>
   <div id="field" :class="daytimeClass">
     <input v-keep-focussed type="text"
-      @keydown.up="jump = jump ? jump : 16"
+      @keydown.up="jump = jump || !blocked.below ? jump : 20"
       @keydown.right="player_velocity_x = 8"
       @keydown.left="player_velocity_x = -8"
       @keyup.right="player_velocity_x = 0"
@@ -10,8 +10,8 @@
     />
     <mountain-background :x="128 + x / 8" :time="time" />
     <div id="wrap" :style="{transform: `translate(${tx}px, ${ty}px)`}">
-      <template v-for="row in rows">
-        <div v-for="block in row" class="block" :class="[block.type]" />
+      <template v-for="(row, y) in rows">
+        <div v-for="(block, x) in row" class="block" :class="[block.type]" />
       </template>
     </div>
     <div id="player" :class="[player_direction]" />
@@ -55,37 +55,30 @@ export default {
   mounted () {
     this.move()
   },
-  watch: {
-    player_push_x (px) {
-      if (px === 0) this.player_velocity_x = 0
-      else this.player_velocity_x = px
-    },
-    player_push_y (py) {
-      if (py === 0) this.player_velocity_y = 8
-      else this.player_velocity_y = py
-    }
-  },
   computed: {
     rows () { return level.grid(this.floorX, this.floorY) },
     surroundings () {
-      const at = this.rows[PLAYER_Y][PLAYER_X]
-      const left = this.rows[PLAYER_Y][PLAYER_X - 1]
-      const right = this.rows[PLAYER_Y][PLAYER_X + 1]
-      const above = this.rows[PLAYER_Y - 1][PLAYER_X]
-      const below = this.rows[PLAYER_Y + 1][PLAYER_X]
+      const px = PLAYER_X
+      const py = PLAYER_Y
+      const at = this.rows[py][px]
+      const left = this.rows[py][px]
+      const right = this.rows[py][px + 1]
+      const above = this.rows[py - 1][px] || at
+      const below = this.rows[py + 1][px]
 
-      const blocked = {
+      return { at, left, right, above, below }
+    },
+    blocked () {
+      const { at, left, right, above, below } = this.surroundings
+
+      return {
         at: !at.walkable,
         left: !left.walkable,
         right: !right.walkable,
         above: !above.walkable,
         below: !below.walkable
       }
-
-      return { at, left, right, below, blocked }
     },
-    cornerX () { return this.x === ~~this.x }, // cornering a block
-    cornerY () { return this.y === ~~this.y },
     floorX () { return Math.floor(this.x) },
     floorY () { return Math.floor(this.y) },
     tx () { return (this.x - this.floorX) * -BLOCK_SIZE },
@@ -123,18 +116,17 @@ export default {
       let vx = this.player_velocity_x * RECIPROCAL
       let vy = (this.player_velocity_y - this.jump) * RECIPROCAL
 
-      if (this.jump > 0) this.jump--
+      if (this.jump > 0) this.jump -= 2
 
       // change player graphic according to direction
       if (vx < 0) this.player_direction = 'left'
       if (vx > 0) this.player_direction = 'right'
 
       // don't walk / fall into blocks
-      const { blocked } = this.surroundings
-      if (vx > 0 && blocked.right) vx = 0
-      if (vx < 0 && blocked.left) vx = 0
-      if (vy > 0 && blocked.below) vy = 0
-      if (vy < 0 && blocked.above) vy = 0
+      if (vx > 0 && this.blocked.right) vx = 0
+      if (vx < 0 && this.blocked.left) vx = 0
+      if (vy > 0 && this.blocked.below) vy = 0
+      if (vy < 0 && this.blocked.above) vy = 0
 
       this.x += vx
       this.y += vy
@@ -189,4 +181,5 @@ export default {
   display: flex;
   flex-flow: row wrap;
 }
+.left-of-player, .right-of-player, .below-player { outline: 2px solid #FFF5; }
 </style>
