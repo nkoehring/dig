@@ -1,12 +1,16 @@
 <template>
   <div id="field" :class="daytimeClass">
     <input v-keep-focussed type="text"
-      @keydown.up="jump = jump || !blocked.below ? jump : 20"
-      @keydown.right="player_velocity_x = 8"
-      @keydown.left="player_velocity_x = -8"
-      @keyup.right="player_velocity_x = 0"
-      @keyup.left="player_velocity_x = 0"
+      @keydown.up="jump = jump || !blocked.down ? jump : 20"
+      @keydown.down="moveTo = 'down'"
+      @keydown.right="moveTo = 'right'"
+      @keydown.left="moveTo = 'left'"
+      @keyup.down="moveTo = null"
+      @keyup.right="moveTo = null"
+      @keyup.left="moveTo = null"
       @keypress.p="togglePause"
+      @keydown.space="digging = true"
+      @keyup.space="digging = false"
     />
     <mountain-background :x="128 + x / 8" :time="time" />
     <div id="wrap" :style="{transform: `translate(${tx}px, ${ty}px)`}">
@@ -14,7 +18,7 @@
         <div v-for="(block, x) in row" class="block" :class="[block.type]" />
       </template>
     </div>
-    <div id="player" :class="[player_direction]" />
+    <div id="player" :class="[playerDirection]" />
     <div id="level-indicator">
       x:{{ floorX }}, y:{{ floorY }}
       <template v-if="moving !== false">({{clock}})</template>
@@ -26,7 +30,6 @@
 <script>
 // import throttle from 'lodash/throttle'
 import Level from './level'
-import Player from './player'
 import MountainBackground from './Background'
 
 const BLOCK_SIZE = 32
@@ -43,10 +46,12 @@ export default {
     return {
       x: 0,
       y: 0,
-      player_direction: 'left',
-      player_velocity_x: 0,
-      player_velocity_y: 8,
+      playerDirection: 'left',
+      playerVelocityX: 0,
+      playerVelocityY: 8,
+      moveTo: null,
       jump: 0,
+      digging: false,
       gravity: 8.0 / 20,
       moving: false,
       time: 250
@@ -63,20 +68,20 @@ export default {
       const at = this.rows[py][px]
       const left = this.rows[py][px]
       const right = this.rows[py][px + 1]
-      const above = this.rows[py - 1][px] || at
-      const below = this.rows[py + 1][px]
+      const up = this.rows[py - 1][px] || at
+      const down = this.rows[py + 1][px]
 
-      return { at, left, right, above, below }
+      return { at, left, right, up, down }
     },
     blocked () {
-      const { at, left, right, above, below } = this.surroundings
+      const { at, left, right, up, down } = this.surroundings
 
       return {
         at: !at.walkable,
         left: !left.walkable,
         right: !right.walkable,
-        above: !above.walkable,
-        below: !below.walkable
+        up: !up.walkable,
+        down: !down.walkable
       }
     },
     floorX () { return Math.floor(this.x) },
@@ -112,25 +117,49 @@ export default {
       const x = this.x
       const y = this.y
 
+      if (this.moveTo !== null) this.playerDirection = this.moveTo
+
+      if (this.moveTo === 'right') {
+        this.playerVelocityX = 8
+      } else if (this.moveTo === 'left') {
+        this.playerVelocityX = -8
+      } else {
+        this.playerVelocityX = 0
+      }
+
       // this.player_velocity_y += this.gravity
-      let vx = this.player_velocity_x * RECIPROCAL
-      let vy = (this.player_velocity_y - this.jump) * RECIPROCAL
+      let dx = this.playerVelocityX * RECIPROCAL
+      let dy = (this.playerVelocityY - this.jump) * RECIPROCAL
 
       if (this.jump > 0) this.jump -= 2
 
-      // change player graphic according to direction
-      if (vx < 0) this.player_direction = 'left'
-      if (vx > 0) this.player_direction = 'right'
-
       // don't walk / fall into blocks
-      if (vx > 0 && this.blocked.right) vx = 0
-      if (vx < 0 && this.blocked.left) vx = 0
-      if (vy > 0 && this.blocked.below) vy = 0
-      if (vy < 0 && this.blocked.above) vy = 0
+      if (dx > 0 && this.blocked.right) dx = 0
+      if (dx < 0 && this.blocked.left) dx = 0
+      if (dy > 0 && this.blocked.down) dy = 0
+      if (dy < 0 && this.blocked.up) dy = 0
 
-      this.x += vx
-      this.y += vy
+      // don't walk, work!
+      if (!this.jump && this.digging) {
+        dx = 0
+        this.dig()
+      }
+
+      this.x += dx
+      this.y += dy
       this.moving = setTimeout(() => this.move(), 64) // roughly every 4 frames
+    },
+    dig () {
+      console.log('dig', this.playerDirection, this.surroundings[this.playerDirection])
+      // lets not bother with invincible blocks (like air or cave)
+      if (this.surroundings[this.playerDirection].hp >= Infinity) return
+
+      const px = this.floorX + PLAYER_X
+      const py = this.floorY + PLAYER_Y
+      const block = {...this.surroundings[this.playerDirection]}
+
+      block.hp--
+      level.change(py, px, block)
     },
     togglePause () {
       if (this.moving === false) { // is paused
@@ -147,6 +176,13 @@ export default {
 
 <style src="./assets/field.css" />
 <style>
+:root {
+  --block-size: 32px;
+  --field-width: 1024px;
+  --field-height: 1024px;
+  --spare-blocks: 2;
+}
+
 #level-indicator {
   position: absolute;
   top: 0;
@@ -155,8 +191,8 @@ export default {
 }
 #player  {
   position: absolute;
-  left: calc(32px * 16);
-  top: calc(32px * 16);
+  left: calc(var(--field-width) / 2);
+  top: calc(var(--field-height) / 2);
   background-image: url(./assets/dwarf_right.png);
 }
 #player.right { background-image: url(./assets/dwarf_right.png); }
@@ -165,8 +201,8 @@ export default {
 #player.down  { background-image: url(./assets/dwarf_back.png); }
 #player, .block {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: var(--block-size);
+  height: var(--block-size);
   background-color: transparent;
   background-size: cover;
   background-position: center;
@@ -174,12 +210,11 @@ export default {
 }
 #wrap {
   position: absolute;
-  top: -32px;
-  left: -32px;
-  width: 1088px;
-  height: 1088px;
+  top: calc(var(--block-size) * (var(--spare-blocks) / -2));
+  left: calc(var(--block-size) * (var(--spare-blocks) / -2));
+  width: calc(var(--field-width) + var(--spare-blocks) * var(--block-size));
+  height: calc(var(--field-height) + var(--spare-blocks) * var(--block-size));
   display: flex;
   flex-flow: row wrap;
 }
-.left-of-player, .right-of-player, .below-player { outline: 2px solid #FFF5; }
 </style>

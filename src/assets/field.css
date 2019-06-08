@@ -1,7 +1,7 @@
 #field {
   position: relative;
-  width: 1024px;
-  height: 1024px;
+  width: var(--field-width);
+  height: var(--field-height);
   margin: auto;
   overflow: hidden;
   background-color: #56F;
