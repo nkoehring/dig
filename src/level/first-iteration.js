@@ -1,5 +1,3 @@
-import SeedRng from 'seedrandom'
-import FastSimplexNoise from 'fast-simplex-noise'
 import {type as T, level as L, probability as P} from './def'
 
 export default class BlockGen {

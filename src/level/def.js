@@ -1,5 +1,5 @@
 export const type = {
-  air: {type: 'air', hp: 0, walkable: true},
+  air: {type: 'air', hp: Infinity, walkable: true},
   grass: {type: 'grass', hp: 1, walkable: false},
 
   tree_top_left: {type: 'tree_top_left', hp: 5, walkable: true},
@@ -33,8 +33,7 @@ export const type = {
   stone_gravel: {type: 'stone_gravel', hp: 5, walkable: false},
   stone: {type: 'stone', hp: 10, walkable: false},
   bedrock: {type: 'bedrock', hp: 25, walkable: false},
-  cave: {type: 'cave', hp: 0, walkable: true},
-  player: {type: 'player', hp: 10, background: 'air'}
+  cave: {type: 'cave', hp: Infinity, walkable: true}
 }
 
 export const level = {
