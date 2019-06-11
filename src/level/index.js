@@ -1,5 +1,5 @@
 import SeedRng from 'seedrandom'
-import FastSimplexNoise from 'fast-simplex-noise'
+import SimplexNoise from 'open-simplex-noise'
 
 import {type as T, level as L} from './def'
 import BlockGen from './first-iteration'
@@ -9,7 +9,7 @@ import PlayerChanges from './third-iteration'
 export default class Level {
   constructor (width, height, seed = 'super random seed') {
     const random = SeedRng(seed)
-    const noiseGen = new FastSimplexNoise({ random })
+    const noiseGen = new SimplexNoise(parseInt(seed, 32))
     this._w = width
     this._h = height
     this._grid = new Array(this._h)

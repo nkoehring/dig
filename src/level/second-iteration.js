@@ -2,7 +2,7 @@ import {type as T, level as L, probability as P} from './def'
 
 export default class BlockExt {
   constructor (noiseGen) {
-    this.rand = (x, y) => 0.5 + 0.5 * noiseGen.raw2D(x, y)
+    this.rand = (x, y) => 0.5 + 0.5 * noiseGen.noise2D(x, y)
   }
 
   level (level, column, row, previousRow) {
