@@ -1,13 +1,14 @@
 <template>
   <div id="field" :class="daytimeClass">
     <input v-keep-focussed type="text"
-      @keydown.up="jump = jump || !blocked.down ? jump : 20"
-      @keydown.down="moveTo = 'down'"
-      @keydown.right="moveTo = 'right'"
-      @keydown.left="moveTo = 'left'"
-      @keyup.down="moveTo = null"
-      @keyup.right="moveTo = null"
-      @keyup.left="moveTo = null"
+      @keydown.up="inputY = -1"
+      @keydown.down="inputY = 1"
+      @keydown.right="inputX = -1"
+      @keydown.left="inputX = 1"
+      @keyup.up="inputY = inputY === -1 ? 0 : 1"
+      @keyup.down="inputY = inputY === 1 ? 0 : 1"
+      @keyup.right="inputX = inputX === -1 ? 0 : 1"
+      @keyup.left="inputX = inputX === 1 ? 0: -1"
       @keypress.p="togglePause"
       @keydown.space="digging = true"
       @keyup.space="digging = false"
@@ -18,7 +19,7 @@
         <div v-for="(block, x) in row" class="block" :class="[block.type]" />
       </template>
     </div>
-    <div id="player" :class="[playerDirection]" />
+    <div id="player" :class="[player.direction]" />
     <div id="level-indicator">
       x:{{ floorX }}, y:{{ floorY }}
       <template v-if="moving !== false">({{clock}})</template>
@@ -29,36 +30,39 @@
 
 <script>
 // import throttle from 'lodash/throttle'
-import Level from './level'
 import MountainBackground from './Background'
+import Level from './level'
+import { Moveable } from './physics'
+import {
+  BLOCK_SIZE,
+  RECIPROCAL,
+  STAGE_WIDTH,
+  STAGE_HEIGHT,
+  PLAYER_X,
+  PLAYER_Y
+} from './level/def'
 
-const BLOCK_SIZE = 32
-const RECIPROCAL = 1 / BLOCK_SIZE
-const PLAYER_X = ~~(BLOCK_SIZE / 2) + 1
-const PLAYER_Y = BLOCK_SIZE - 15
-const PLAYER_MAX_VELOCITY = 32
-const level = new Level(BLOCK_SIZE + 2, BLOCK_SIZE + 2)
+const level = new Level(STAGE_WIDTH + 2, STAGE_HEIGHT + 2)
+const player = new Moveable(PLAYER_X, PLAYER_Y)
 
 export default {
   name: 'field',
   components: { MountainBackground },
   data () {
     return {
+      player,
       x: 0,
-      y: 0,
-      playerDirection: 'left',
-      playerVelocityX: 0,
-      playerVelocityY: 8,
-      moveTo: null,
-      jump: 0,
-      digging: false,
-      gravity: 8.0 / 20,
+      y: 12,
+      inputX: 0,
+      inputY: 0,
+      time: 250,
       moving: false,
-      time: 250
+      lastTick: 0
     }
   },
   mounted () {
-    this.move()
+    this.lastTick = performance.now()
+    this.move(this.lastTick)
   },
   computed: {
     rows () { return level.grid(this.floorX, this.floorY) },
@@ -110,28 +114,21 @@ export default {
     }
   },
   methods: {
-    move () {
+    move (thisTick) {
+      this.moving = requestAnimationFrame(this.move)
+
+      // keep roughly 20 fps
+      if (thisTick - this.lastTick < 50) return
+
       // set time of day in ticks
       this.time = (this.time + 0.1) % 1000
 
-      const x = this.x
-      const y = this.y
+      const player = this.player
+      const x = player.x
+      const y = player.y
 
-      if (this.moveTo !== null) this.playerDirection = this.moveTo
-
-      if (this.moveTo === 'right') {
-        this.playerVelocityX = 8
-      } else if (this.moveTo === 'left') {
-        this.playerVelocityX = -8
-      } else {
-        this.playerVelocityX = 0
-      }
-
-      // this.player_velocity_y += this.gravity
-      let dx = this.playerVelocityX * RECIPROCAL
-      let dy = (this.playerVelocityY - this.jump) * RECIPROCAL
-
-      if (this.jump > 0) this.jump -= 2
+      let dx = player.vx * player.dir * RECIPROCAL
+      let dy = player.vy * RECIPROCAL
 
       // don't walk / fall into blocks
       if (dx > 0 && this.blocked.right) dx = 0
@@ -140,14 +137,14 @@ export default {
       if (dy < 0 && this.blocked.up) dy = 0
 
       // don't walk, work!
-      if (!this.jump && this.digging) {
+      if (!this.inputY && this.digging) {
         dx = 0
         this.dig()
       }
 
       this.x += dx
       this.y += dy
-      this.moving = setTimeout(() => this.move(), 64) // roughly every 4 frames
+      this.lastTick = thisTick
     },
     dig () {
       console.log('dig', this.playerDirection, this.surroundings[this.playerDirection])
@@ -163,10 +160,9 @@ export default {
     },
     togglePause () {
       if (this.moving === false) { // is paused
-        this.moving = true // avoid (unlikely) race condition
         this.move()
       } else {
-        clearTimeout(this.moving)
+        cancelAnimationFrame(this.moving)
         this.moving = false
       }
     }
@@ -179,7 +175,7 @@ export default {
 :root {
   --block-size: 32px;
   --field-width: 1024px;
-  --field-height: 1024px;
+  --field-height: 576px;
   --spare-blocks: 2;
 }
 

@@ -1,3 +1,15 @@
+export const BLOCK_SIZE = 32 // each block is 32̨̣̌̇x32 pixel in size and equals 1m
+export const RECIPROCAL = 1 / BLOCK_SIZE
+
+export const STAGE_WIDTH = 32 // 32*32 = 1024 pixel wide stage
+export const STAGE_HEIGHT = ~~(STAGE_WIDTH * 0.5625) // 16:9 😎
+
+// the player position is fixed to the middle of the x axis
+export const PLAYER_X = ~~(STAGE_WIDTH / 2) + 1
+export const PLAYER_Y = ~~(STAGE_HEIGHT * 0.5) // fall from the center
+
+export const GRAVITY = 10 // blocks per second
+
 export const type = {
   air: {type: 'air', hp: Infinity, walkable: true},
   grass: {type: 'grass', hp: 1, walkable: false},

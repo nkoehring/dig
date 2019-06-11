@@ -4,6 +4,7 @@
 
 <script>
 import solarQuartet from './solar-quartet'
+import { BLOCK_SIZE, STAGE_WIDTH, STAGE_HEIGHT } from './level/def'
 
 export default {
   name: 'background',
@@ -21,18 +22,16 @@ export default {
     time () { this.refresh() }
   },
   mounted () {
-    const canvasSize = 512
-    const godraysSize = 128
     const canvas = this.$refs.canvas
     const godraysCanvas = document.createElement('canvas')
-    canvas.width = canvasSize
-    canvas.height = canvasSize
-    godraysCanvas.width = godraysSize
-    godraysCanvas.height = godraysSize
+    canvas.width = STAGE_WIDTH * BLOCK_SIZE
+    canvas.height = STAGE_HEIGHT * BLOCK_SIZE
+    godraysCanvas.width = ~~(canvas.width / 8.0)
+    godraysCanvas.height = ~~(canvas.height / 8.0)
     this.redraw = solarQuartet.bind(
       null,
-      canvas, canvas.getContext('2d'), canvasSize, canvasSize,
-      godraysCanvas, godraysCanvas.getContext('2d'), godraysSize, godraysSize,
+      canvas, canvas.getContext('2d'), ~~(canvas.width / 2.0), ~~(canvas.height / 2.0),
+      godraysCanvas, godraysCanvas.getContext('2d'), godraysCanvas.width, godraysCanvas.height,
     )
     this.refresh()
   },
@@ -65,8 +64,8 @@ export default {
 <style>
 #background {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: var(--field-width);
+  height: var(--field-height);
   object-fit: contain;
   background: black;
 }

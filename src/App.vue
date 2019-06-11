@@ -19,7 +19,9 @@ export default {
 
 <style>
 html,body,#app {
-  display: block;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
   width: 100vw;
   height: 100vh;
   background: black;
@@ -27,5 +29,4 @@ html,body,#app {
   padding: 0;
   overflow: hidden;
 }
-
 </style>
