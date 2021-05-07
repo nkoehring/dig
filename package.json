@@ -26,7 +26,7 @@
     "cross-env": "^5.2.0",
     "css-loader": "^3.0.0",
     "file-loader": "^1.1.4",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.21",
     "open-simplex-noise": "^1.6.0",
     "vue-loader": "^13.7.3",
     "vue-template-compiler": "^2.6.10",
